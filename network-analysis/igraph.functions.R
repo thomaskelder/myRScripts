@@ -183,3 +183,17 @@ dataToGraph = function(graph, data, cols, matchCol, edges = T, nodes = T, edge.f
 removeLonelyNodes = function(g) {
   subgraph(g, which(igraph::degree(g) != 0) - 1)
 }
+
+#########################################
+## Find communities per component      ##
+## using WalkTrap                      ##
+#########################################
+communitiesPerComponent = function(g, components) {
+  lapply(components, function(comp) {
+    cl = walktrap.community(comp)
+    if(max(cl$membership) == (vcount(comp) -1)) { ##Invalid clustering (each node separate)
+      cl$membership = rep(0, length(cl$membership))
+    }
+    cl
+  })
+}

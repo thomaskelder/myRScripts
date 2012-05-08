@@ -12,3 +12,7 @@ createOrGetEntity = function(entity) {
   }
   entity
 }
+
+filesFromEntity = function(entity) {
+  paste(entity$cacheDir, entity$files, sep="/")
+}
