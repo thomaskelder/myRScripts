@@ -197,3 +197,52 @@ communitiesPerComponent = function(g, components) {
     cl
   })
 }
+
+assignMembership = function(g, clusterings, components, attr = "community", min.edges.per.node = 1, componentsAsClusterSize = vcount(components[[1]])) {
+  if(length(components) == 0) return(g)
+  
+  ## Assign cluster membership to nodes
+  last = 0
+  for(i in 1:length(components)) {
+    component = components[[i]]
+    
+    members = clusterings[[i]]$membership + last
+    last = max(members) + 1
+    names(members) = V(component)$name
+    index = V(g)[name %in% names(members)]
+    
+    g = set.vertex.attribute(g, attr, index, members[V(g)[index]$name])
+  }
+  g = set.vertex.attribute(g, attr, V(g)[is.na(get.vertex.attribute(g, attr))], -1)
+  
+  ## Assign cluster membership to edges within cluster
+  members.edge = apply(get.edgelist(g, names=F), 1, function(e) {
+    m = get.vertex.attribute(g, attr, e)
+    if(m[1] == m[2]) m[1]
+    else -1
+  })
+  g = set.edge.attribute(g, attr, value = members.edge)
+  
+  ## Add edge attribute for edge/node ratio filter
+  members.edge.count = table(get.edge.attribute(g, attr))
+  members.node.count = table(get.vertex.attribute(g, attr))
+  edges.per.node = members.edge.count / members.node.count[names(members.edge.count)]
+  inv = members.edge %in% names(which(edges.per.node <= min.edges.per.node))
+  #g = set.edge.attribute(g, attr, which(inv) -1, -2)
+  g = set.edge.attribute(g, paste("epn_", attr, sep=""), value = members.edge)
+  g = set.edge.attribute(g, paste("epn_", attr, sep=""), which(inv) - 1, -2) 
+  
+  # Set cluster membership to component number if component is too small to be clustered
+  for(i in 1:length(components)) {
+    component = components[[i]]
+    if(vcount(component) < componentsAsClusterSize) {
+      nodes = V(g)[name %in% V(component)$name]
+      edges = E(g)[adj(nodes)]
+      g = set.edge.attribute(g, attr, edges, paste("comp", i, sep=""))
+      g = set.edge.attribute(g, paste("epn_", attr, sep=""), edges, paste("comp", i, sep=""))
+      g = set.vertex.attribute(g, attr, nodes, paste("comp", i, sep=""))
+    }
+  }
+  
+  g
+}
