@@ -21,7 +21,7 @@ plotTraitMod = function(datTraits, trait, MEs, outPath, group, mod, r = "", titl
 	dev.off()
 }
 
-plotTraitCorrelations = function(moduleTraitCor, moduleTraitPvalue, MEs, datTraits, file = NULL, plotPvalue = T, windowSize = c(10,6)) {
+plotTraitCorrelations = function(moduleTraitCor, moduleTraitPvalue, MEs, datTraits, file = NULL, plotPvalue = T, windowSize = c(10,6), colors = greenWhiteRed(50)) {
   sizeGrWindow(windowSize[1], windowSize[2])
   textMatrix = signif(moduleTraitCor, 2)
   if(plotPvalue) {
@@ -35,7 +35,7 @@ plotTraitCorrelations = function(moduleTraitCor, moduleTraitPvalue, MEs, datTrai
     yLabels = names(MEs),
     ySymbols = names(MEs),
     colorLabels = FALSE,
-    colors = greenWhiteRed(50),
+    colors = colors,
     textMatrix = textMatrix,
     setStdMargins = FALSE,
     cex.text = 0.5,
