@@ -3,6 +3,7 @@
 ##                                      ##
 ## Thomas Kelder, 2012                  ##
 ##########################################
+library(igraph)
 
 ###############################################################
 ## Export igraph graph to GML format compatible to Cytoscape ##
@@ -152,7 +153,7 @@ dataToGraph = function(graph, data, cols, matchCol, edges = T, nodes = T, edge.f
     
     if(nodes) {
       nodeWeights = sapply(V(graph)$name, function(x) {
-        w = data[data[,matchCol] == x, col]
+        w = as.numeric(data[data[,matchCol] == x, col])
         w = mean(w, na.rm=T)
         if(is.nan(w)) w = NA
         w
