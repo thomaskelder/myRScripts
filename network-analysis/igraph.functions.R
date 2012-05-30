@@ -147,18 +147,19 @@ mergeGraphs = function(graphs, setSourceAttr = T, firstAsBase = F) {
 ##################################################
 ## Transfer data matrix to node/edge attributes ##
 ##################################################
-dataToGraph = function(graph, data, cols, matchCol, edges = T, nodes = T, edge.function = max, edge.na = 1) {
+dataToGraph = function(graph, data, cols, matchCol, edges = T, nodes = T, edge.function = max, edge.na = 1, combine.function = function(rows, col) mean(rows[,col], na.rm=T)) {
   for(col in cols) {
     message("Processing ", col)
     
     if(nodes) {
       nodeWeights = sapply(V(graph)$name, function(x) {
-        w = as.numeric(data[data[,matchCol] == x, col])
-        w = mean(w, na.rm=T)
+        rows = data[data[,matchCol] == x,]
+        if(!is.null(nrow(rows)) && nrow(rows) > 0) w = combine.function(rows, col)
+        else w = rows[col]
         if(is.nan(w)) w = NA
         w
       })
-      graph = set.vertex.attribute(graph, col, V(graph), nodeWeights)
+      graph = set.vertex.attribute(graph, col, V(graph), as.numeric(nodeWeights))
     }
     
     if(edges) {
