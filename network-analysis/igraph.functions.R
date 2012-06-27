@@ -12,11 +12,12 @@ saveGML = function(g, fileName, title = "untitled") {
 	attrToString = function(x) {
 		m = mode(x)
 		if(m == "numeric") {
-			x = sprintf("%.12f", x)
+			xc = sprintf("%.12f", x)
 			
-			x[is.na(x)] = "NaN"
-			x[x == "Infinity"]= "Infinity"
-			x[x == "-Infinity"]= "-Infinity"	
+			xc[is.na(x)] = "NaN"
+			xc[x == "Infinity"]= "Infinity"
+			xc[x == "-Infinity"]= "-Infinity"
+      x = xc
 		} else {
 			x = paste("\"", x , "\"", sep="")
 		}
