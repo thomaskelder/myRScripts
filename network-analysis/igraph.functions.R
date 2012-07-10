@@ -3,7 +3,7 @@
 ##                                      ##
 ## Thomas Kelder, 2012                  ##
 ##########################################
-library(igraph)
+library(igraph0)
 
 ###############################################################
 ## Export igraph graph to GML format compatible to Cytoscape ##
