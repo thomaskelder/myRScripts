@@ -3,63 +3,7 @@
 ##                                      ##
 ## Thomas Kelder, 2012                  ##
 ##########################################
-library(igraph0)
-
-###############################################################
-## Export igraph graph to GML format compatible to Cytoscape ##
-###############################################################
-saveGML = function(g, fileName, title = "untitled") {
-	attrToString = function(x) {
-		m = mode(x)
-		if(m == "numeric") {
-			xc = sprintf("%.12f", x)
-			
-			xc[is.na(x)] = "NaN"
-			xc[x == "Infinity"]= "Infinity"
-			xc[x == "-Infinity"]= "-Infinity"
-      x = xc
-		} else {
-			x = paste("\"", x , "\"", sep="")
-		}
-		x
-	}
-	
-	vAttrNames = list.vertex.attributes(g)
-	vAttrNames = vAttrNames[vAttrNames != "id"]
-	vAttr = lapply(vAttrNames, function(x) attrToString(get.vertex.attribute(g, x)))
-	names(vAttr) = vAttrNames
-	eAttrNames = list.edge.attributes(g)
-	eAttrNames = eAttrNames[eAttrNames != "id"]
-	eAttr = lapply(eAttrNames, function(x) attrToString(get.edge.attribute(g, x)))
-	names(eAttr) = eAttrNames
-	
-	f = file(fileName, "w")
-	cat("graph\n[", file=f)
-	cat(" directed ", as.integer(is.directed(g)), "\n", file=f)
-	for(i in seq_len(vcount(g))) {
-		cat(" node\n [\n", file=f)
-		cat("    id", i-1, "\n", file=f)
-		for(n in names(vAttr)) {
-			cat("   ", gsub("[\\._]", "", n), vAttr[[n]][i], "\n", file=f)
-		}
-		cat(" ]\n", file=f)
-	}
-	
-	el = get.edgelist(g, names=FALSE)
-	for (i in seq_len(nrow(el))) { 
-		cat(" edge\n  [\n", file=f) 
-		cat("  source", el[i,1], "\n", file=f) 
-		cat("  target", el[i,2], "\n", file=f) 
-		for(n in names(eAttr)) {
-			cat("   ", gsub("[\\._]", "", n), eAttr[[n]][i], "\n", file=f)
-		}
-		cat(" ]\n", file=f) 
-	}
-	
-	cat("]\n", file=f)
-	cat("Title \"", title, '"', file=f, sep="")
-	close(f)
-}
+library(igraph)
 
 ################################################################
 ## Combine undirected interaction networks into a             ##
@@ -132,7 +76,7 @@ mergeGraphs = function(graphs, setSourceAttr = T, firstAsBase = F) {
     el = get.edgelist(g, names = F)
     for(n in 1:nrow(el)) {
       if(n %% 1000 == 0) message(n, " out of ", ecount(g))
-      edges[c(n*2-1,n*2)] = c(newNodeIndex[el[n,1]+1], newNodeIndex[el[n,2]+1])
+      edges[c(n*2-1,n*2)] = c(newNodeIndex[el[n,1]], newNodeIndex[el[n,2]])
     }
     attr = list()
     for(n in list.edge.attributes(g)) {
@@ -178,74 +122,4 @@ dataToGraph = function(graph, data, cols, matchCol, edges = T, nodes = T, edge.f
     }
   }
   graph
-}
-
-#########################################
-## Remove unconnected nodes from graph ##
-#########################################
-removeLonelyNodes = function(g) {
-  subgraph(g, which(igraph::degree(g) != 0) - 1)
-}
-
-#########################################
-## Find communities per component      ##
-## using WalkTrap                      ##
-#########################################
-communitiesPerComponent = function(g, components) {
-  lapply(components, function(comp) {
-    cl = walktrap.community(comp)
-    if(max(cl$membership) == (vcount(comp) -1)) { ##Invalid clustering (each node separate)
-      cl$membership = rep(0, length(cl$membership))
-    }
-    cl
-  })
-}
-
-assignMembership = function(g, clusterings, components, attr = "community", min.edges.per.node = 1, componentsAsClusterSize = vcount(components[[1]])) {
-  if(length(components) == 0) return(g)
-  
-  ## Assign cluster membership to nodes
-  last = 0
-  for(i in 1:length(components)) {
-    component = components[[i]]
-    
-    members = clusterings[[i]]$membership + last
-    last = max(members) + 1
-    names(members) = V(component)$name
-    index = V(g)[name %in% names(members)]
-    
-    g = set.vertex.attribute(g, attr, index, members[V(g)[index]$name])
-  }
-  g = set.vertex.attribute(g, attr, V(g)[is.na(get.vertex.attribute(g, attr))], -1)
-  
-  ## Assign cluster membership to edges within cluster
-  members.edge = apply(get.edgelist(g, names=F), 1, function(e) {
-    m = get.vertex.attribute(g, attr, e)
-    if(m[1] == m[2]) m[1]
-    else -1
-  })
-  g = set.edge.attribute(g, attr, value = members.edge)
-  
-  ## Add edge attribute for edge/node ratio filter
-  members.edge.count = table(get.edge.attribute(g, attr))
-  members.node.count = table(get.vertex.attribute(g, attr))
-  edges.per.node = members.edge.count / members.node.count[names(members.edge.count)]
-  inv = members.edge %in% names(which(edges.per.node <= min.edges.per.node))
-  #g = set.edge.attribute(g, attr, which(inv) -1, -2)
-  g = set.edge.attribute(g, paste("epn_", attr, sep=""), value = members.edge)
-  g = set.edge.attribute(g, paste("epn_", attr, sep=""), which(inv) - 1, -2) 
-  
-  # Set cluster membership to component number if component is too small to be clustered
-  for(i in 1:length(components)) {
-    component = components[[i]]
-    if(vcount(component) < componentsAsClusterSize) {
-      nodes = V(g)[name %in% V(component)$name]
-      edges = E(g)[adj(nodes)]
-      g = set.edge.attribute(g, attr, edges, paste("comp", i, sep=""))
-      g = set.edge.attribute(g, paste("epn_", attr, sep=""), edges, paste("comp", i, sep=""))
-      g = set.vertex.attribute(g, attr, nodes, paste("comp", i, sep=""))
-    }
-  }
-  
-  g
 }
