@@ -5,6 +5,62 @@
 ##########################################
 library(igraph)
 
+###############################################################
+## Export igraph graph to GML format compatible to Cytoscape ##
+###############################################################
+saveGML = function(g, fileName, title = "untitled") {
+  attrToString = function(x) {
+    m = mode(x)
+    if(m == "numeric") {
+      xc = sprintf("%.12f", x)
+      
+      xc[is.na(x)] = "NaN"
+      xc[x == "Infinity"]= "Infinity"
+      xc[x == "-Infinity"]= "-Infinity"
+      x = xc
+    } else {
+      x = paste("\"", x , "\"", sep="")
+    }
+    x
+  }
+  
+  vAttrNames = list.vertex.attributes(g)
+  vAttrNames = vAttrNames[vAttrNames != "id"]
+  vAttr = lapply(vAttrNames, function(x) attrToString(get.vertex.attribute(g, x)))
+  names(vAttr) = vAttrNames
+  eAttrNames = list.edge.attributes(g)
+  eAttrNames = eAttrNames[eAttrNames != "id"]
+  eAttr = lapply(eAttrNames, function(x) attrToString(get.edge.attribute(g, x)))
+  names(eAttr) = eAttrNames
+  
+  f = file(fileName, "w")
+  cat("graph\n[", file=f)
+  cat(" directed ", as.integer(is.directed(g)), "\n", file=f)
+  for(i in seq_len(vcount(g))) {
+    cat(" node\n [\n", file=f)
+    cat("    id", i, "\n", file=f)
+    for(n in names(vAttr)) {
+      cat("   ", gsub("[\\._]", "", n), vAttr[[n]][i], "\n", file=f)
+    }
+    cat(" ]\n", file=f)
+  }
+  
+  el = get.edgelist(g, names=FALSE)
+  for (i in seq_len(nrow(el))) { 
+    cat(" edge\n  [\n", file=f) 
+    cat("  source", el[i,1], "\n", file=f) 
+    cat("  target", el[i,2], "\n", file=f) 
+    for(n in names(eAttr)) {
+      cat("   ", gsub("[\\._]", "", n), eAttr[[n]][i], "\n", file=f)
+    }
+    cat(" ]\n", file=f) 
+  }
+  
+  cat("]\n", file=f)
+  cat("Title \"", title, '"', file=f, sep="")
+  close(f)
+}
+
 ################################################################
 ## Combine undirected interaction networks into a             ##
 ## single graph. Attributes will be merged when possible.     ##
