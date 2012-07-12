@@ -179,3 +179,86 @@ dataToGraph = function(graph, data, cols, matchCol, edges = T, nodes = T, edge.f
   }
   graph
 }
+
+#########################################
+## Remove unconnected nodes from graph ##
+#########################################
+removeLonelyNodes = function(g) {
+  subgraph(g, which(igraph::degree(g) != 0) - 1)
+}
+
+#########################################
+## Find communities per component      ##
+#########################################
+communitiesPerComponent = function(g, components, comFun = walktrap.community, ...) {
+  lapply(components, function(comp) {
+    cl = comFun(comp, ...)
+    if(max(cl$membership) == (vcount(comp) -1)) { ##Invalid clustering (each node separate)
+      cl$membership = rep(0, length(cl$membership))
+    }
+    cl
+  })
+}
+
+assignMembership = function(g, clusterings, components, attr = "community", min.edges.per.node = 1, componentsAsClusterSize = vcount(components[[1]])) {
+  if(length(components) == 0) return(g)
+  
+  ## Assign cluster membership to nodes
+  last = 0
+  for(i in 1:length(components)) {
+    component = components[[i]]
+    
+    members = clusterings[[i]]$membership + last
+    last = max(members) + 1
+    names(members) = V(component)$name
+    index = V(g)[name %in% names(members)]
+    
+    g = set.vertex.attribute(g, attr, index, members[V(g)[index]$name])
+  }
+  g = set.vertex.attribute(g, attr, V(g)[is.na(get.vertex.attribute(g, attr))], -1)
+  
+  ## Assign cluster membership to edges within cluster
+  members.edge = apply(get.edgelist(g, names=F), 1, function(e) {
+    m = get.vertex.attribute(g, attr, e)
+    if(m[1] == m[2]) m[1]
+    else -1
+  })
+  g = set.edge.attribute(g, attr, value = members.edge)
+  
+  ## Add edge attribute for edge/node ratio filter
+  members.edge.count = table(get.edge.attribute(g, attr))
+  members.node.count = table(get.vertex.attribute(g, attr))
+  edges.per.node = members.edge.count / members.node.count[names(members.edge.count)]
+  inv = members.edge %in% names(which(edges.per.node <= min.edges.per.node))
+  #g = set.edge.attribute(g, attr, which(inv) -1, -2)
+  g = set.edge.attribute(g, paste("epn_", attr, sep=""), value = members.edge)
+  g = set.edge.attribute(g, paste("epn_", attr, sep=""), which(inv) - 1, -2) 
+  
+  # Set cluster membership to component number if component is too small to be clustered
+  for(i in 1:length(components)) {
+    component = components[[i]]
+    if(vcount(component) < componentsAsClusterSize) {
+      nodes = V(g)[name %in% V(component)$name]
+      edges = E(g)[adj(nodes)]
+      g = set.edge.attribute(g, attr, edges, paste("comp", i, sep=""))
+      g = set.edge.attribute(g, paste("epn_", attr, sep=""), edges, paste("comp", i, sep=""))
+      g = set.vertex.attribute(g, attr, nodes, paste("comp", i, sep=""))
+    }
+  }
+  
+  g
+}
+
+removeUndirectedMultipleEdges = function(g, dirAttr = "Directed", undirValue = "false") {
+  rmEdges = c()
+  for(e in E(g)) {
+    if(get.edge.attribute(g, dirAttr, e) == undirValue & !(e %in% rmEdges)) {
+      en = get.edge(g, e)
+      er = E(g)[en[2] %->% en[1]]
+      if(length(er) > 0 && get.edge.attribute(g, dirAttr, er) == undirValue) {
+        rmEdges = c(rmEdges, er)
+      }
+    }
+  }
+  gn = delete.edges(g, rmEdges)
+}
