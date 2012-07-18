@@ -184,7 +184,7 @@ dataToGraph = function(graph, data, cols, matchCol, edges = T, nodes = T, edge.f
 ## Remove unconnected nodes from graph ##
 #########################################
 removeLonelyNodes = function(g) {
-  subgraph(g, which(igraph::degree(g) != 0) - 1)
+  induced.subgraph(g, which(igraph::degree(g) != 0) - 1)
 }
 
 #########################################
@@ -225,14 +225,7 @@ assignMembership = function(g, clusterings, components, attr = "community", min.
   })
   g = set.edge.attribute(g, attr, value = members.edge)
   
-  ## Add edge attribute for edge/node ratio filter
-  members.edge.count = table(get.edge.attribute(g, attr))
-  members.node.count = table(get.vertex.attribute(g, attr))
-  edges.per.node = members.edge.count / members.node.count[names(members.edge.count)]
-  inv = members.edge %in% names(which(edges.per.node <= min.edges.per.node))
-  #g = set.edge.attribute(g, attr, which(inv) -1, -2)
-  g = set.edge.attribute(g, paste("epn_", attr, sep=""), value = members.edge)
-  g = set.edge.attribute(g, paste("epn_", attr, sep=""), which(inv) - 1, -2) 
+  g = filterCommunitiesByEdgeCount(g, attr, min.edges.per.node)
   
   # Set cluster membership to component number if component is too small to be clustered
   for(i in 1:length(components)) {
@@ -249,10 +242,23 @@ assignMembership = function(g, clusterings, components, attr = "community", min.
   g
 }
 
+filterCommunitiesByEdgeCount = function(g, attr, min.edges.per.node) {
+  members.edge = get.edge.attribute(g, attr)
+  ## Add edge attribute for edge/node ratio filter
+  members.edge.count = table(get.edge.attribute(g, attr))
+  members.node.count = table(get.vertex.attribute(g, attr))
+  edges.per.node = members.edge.count / members.node.count[names(members.edge.count)]
+  inv = members.edge %in% names(which(edges.per.node <= min.edges.per.node))
+  #g = set.edge.attribute(g, attr, which(inv) -1, -2)
+  g = set.edge.attribute(g, paste("epn_", attr, sep=""), value = members.edge)
+  g = set.edge.attribute(g, paste("epn_", attr, sep=""), which(inv), -2)
+  g
+}
+
 removeUndirectedMultipleEdges = function(g, dirAttr = "Directed", undirValue = "false") {
   rmEdges = c()
   for(e in E(g)) {
-    if(get.edge.attribute(g, dirAttr, e) == undirValue & !(e %in% rmEdges)) {
+    if(!(e %in% rmEdges)) {
       en = get.edge(g, e)
       er = E(g)[en[2] %->% en[1]]
       if(length(er) > 0 && get.edge.attribute(g, dirAttr, er) == undirValue) {
