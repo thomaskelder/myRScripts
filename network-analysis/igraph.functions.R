@@ -268,3 +268,52 @@ removeUndirectedMultipleEdges = function(g, dirAttr = "Directed", undirValue = "
   }
   gn = delete.edges(g, rmEdges)
 }
+
+################################################
+## Convenience function to perform community  ##
+## finding and annotate communities with GO   ##
+################################################
+detectAndAnnotateCommunities = function(g, clustAttr = "cluster", organism = "mouse", ...) {
+  components = decompose.graph(g, "weak")
+  components = components[order(sapply(components, vcount), decreasing=T)]
+  components = components[sapply(components, vcount) > 2]
+  communities = communitiesPerComponent(g, components, ...)
+  g = assignMembership(
+    g, 
+    communities, 
+    components, attr = clustAttr,
+    min.edges.per.node = 0
+  )
+  
+  library(WGCNA)
+  vClusters = get.vertex.attribute(g, clustAttr)
+  clusters = unique(vClusters)
+  go = GOenrichmentAnalysis(vClusters, V(g)$entrez, organism=organism)
+  go.tab = go$bestPTerms[[4]]$enrichment
+  
+  g = set.vertex.attribute(g, paste0("GO_", clustAttr), value = rep("", vcount(g)))
+  g = set.vertex.attribute(g, paste0("GOCount_", clustAttr), value = rep(-1, vcount(g)))
+  g = set.vertex.attribute(g, paste0("GOSig_", clustAttr), value = rep("", vcount(g)))
+  
+  for(mod in clusters) {
+    value = rep("", 3)
+    modGO = which(go.tab[,'module'] == mod)
+    if(length(modGO) == 0) {
+      value = c("", "", -1)
+    } else {
+      sel = go.tab[modGO, ]
+      sig = sel[sel[,"enrichmentP"] < 1E-3,]
+      
+      value = c(
+        paste(sig[,"termName"], collapse = "; "), 
+        paste(sig[,"nModGenesInTerm"], collapse = "; "), 
+        as.numeric(nrow(sig) > 0)
+      )
+    }
+    g = set.vertex.attribute(g, paste0("GO_", clustAttr), index = V(g)[vClusters == mod], value = value[1])
+    g = set.vertex.attribute(g, paste0("GOCount_", clustAttr), index = V(g)[vClusters == mod], value = value[2])
+    g = set.vertex.attribute(g, paste0("GOSig_", clustAttr), index = V(g)[vClusters == mod], value = value[3])
+  }
+  
+  g
+}
