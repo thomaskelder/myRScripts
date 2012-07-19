@@ -157,7 +157,7 @@ dataToGraph = function(graph, data, cols, matchCol, edges = T, nodes = T, edge.f
         rows = data[data[,matchCol] == x,]
         if(!is.null(nrow(rows)) && nrow(rows) > 0) w = combine.function(rows, col)
         else w = rows[col]
-        if(is.nan(w)) w = NA
+        if((!is.null(nrow(w)) && nrow(w) == 0) || is.nan(w)) w = NA
         w
       })
       graph = set.vertex.attribute(graph, col, V(graph), as.numeric(nodeWeights))
@@ -176,6 +176,18 @@ dataToGraph = function(graph, data, cols, matchCol, edges = T, nodes = T, edge.f
       })
       graph = set.edge.attribute(graph, col, E(graph), edgeWeights)
     }
+  }
+  graph
+}
+
+#############################################
+## Transfer data matrix to node attributes ##
+## Assumes rownames are node names.        ##
+#############################################
+dataToNodes = function(graph, data) {
+  nodes = rownames(data)[rownames(data) %in% V(graph)$name]
+  for(col in colnames(data)) {
+    graph = set.vertex.attribute(graph, col, index = V(graph)[nodes], value = data[nodes, col])
   }
   graph
 }
