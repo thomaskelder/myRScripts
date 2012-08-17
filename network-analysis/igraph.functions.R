@@ -19,6 +19,8 @@ saveGML = function(g, fileName, title = "untitled") {
       xc[x == "-Infinity"]= "-Infinity"
       x = xc
     } else {
+      #Escape invalid characters
+	   x = gsub('"', "'", x)
       x = paste("\"", x , "\"", sep="")
     }
     x
