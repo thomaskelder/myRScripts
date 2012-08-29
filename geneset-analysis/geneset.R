@@ -46,7 +46,7 @@ saveSetCache = function(sets, file) {
   save(sets, file = file)
 }
 
-performEnrichment = function(tscores, sets, ids = rownames(tscores), ...) {
+performEnrichment = function(tscores, sets, ids = rownames(tscores), signed = F, ...) {
   i = 0
   gsea = t(sapply(sets, function(s) {
     message(i, " out of ", length(sets))
@@ -55,7 +55,12 @@ performEnrichment = function(tscores, sets, ids = rownames(tscores), ...) {
     set = intersect(geneIds(s), rownames(tscores))
     p = sapply(colnames(tscores), function(g) {
       ts = tscores[,g]
-      geneSetTest(ids %in% set, ts, ...)
+      pval = geneSetTest(ids %in% set, ts, ...)
+      if(signed) {
+        m = mean(ts[set], na.rm=T)
+        if(!is.na(m) && m != 0) pval = sign(m) * pval
+      }
+      pval
     })
     c(description = description(s), size = length(set), p)
   }))
@@ -75,7 +80,10 @@ performEnrichment = function(tscores, sets, ids = rownames(tscores), ...) {
   gsea.list$size = gsea.num[, 'size']
   gsea.list$pvalue = gsea.num[, 2:ncol(gsea.num)]
   
-  gsea.adj = sapply(colnames(tscores), function(col) p.adjust(gsea.num[,col], method="BH"))
+  gsea.adj = sapply(colnames(tscores), function(col) {
+    padj = p.adjust(abs(gsea.num[,col]), method="BH")
+    padj * sign(gsea.num[,col])
+  })
   gsea.list$adj.pvalue = gsea.adj
   as.data.frame(gsea.list, stringsAsFactors=F)
 }
@@ -102,4 +110,45 @@ topEnrichmentGenes = function(gsea, sets, data, tCol, ids = rownames(data), pCut
   rownames(datSummary) = NULL
   datSummary = datSummary[2:nrow(datSummary),]
   datSummary
+}
+
+enrichmentHeatmap = function(gsea, signed = T, rowNameTruncate = 25, pCutoff = 0.001, minSig = 1, minmax = 6, setNames = rownames(gsea), colNames = colnames(gsea), ...) {
+  gsea.signed = gsea
+  if(signed) {
+    gsea = abs(gsea.signed)
+  }
+  gsea.log10 = -log10(gsea)
+  for(cn in colnames(gsea.log10)) {
+    gsea.log10[, cn] = sign(gsea.signed[, cn]) * gsea.log10[, cn]
+  }
+  library(pheatmap)
+  shortSetNames = sapply(setNames, function(sn) {
+    if(nchar(sn) > rowNameTruncate) sn = paste0(substr(sn, 1, rowNameTruncate), '...')
+    sn
+  })
+  
+  ## Over time in HF+chol
+  gsea.log10.chol = gsea.log10
+  gsea.log10.chol = as.matrix(gsea.log10.chol)
+  rownames(gsea.log10.chol) = shortSetNames
+  
+  gsea.log10.chol = gsea.log10.chol[rowSums(abs(gsea.log10.chol) > -log10(pCutoff)) >= minSig,]
+  
+  saturateValues = function(values, satMin, valMin, satMax, valMax) {
+    values.sat = values
+    t(apply(values, 1, function(x) {
+      x[x < satMin] = valMin
+      x[x > satMax] = valMax
+      x
+    }))
+  }
+  
+  nc = 256
+  colors = colorRampPalette(c('blue', 'white', 'red'))(nc)
+  breaks = seq(-minmax, minmax, (2*minmax)/(nc-1))
+  hdata = saturateValues(gsea.log10.chol, -minmax, -minmax, minmax, minmax)
+  colnames(hdata) = colNames
+  pheatmap(
+    hdata, cluster_cols = F, color = colors, scale = "none", breaks = breaks, ...
+  )
 }
