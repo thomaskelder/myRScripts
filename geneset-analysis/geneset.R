@@ -127,26 +127,15 @@ enrichmentHeatmap = function(gsea, signed = T, rowNameTruncate = 25, pCutoff = 0
     sn
   })
   
-  ## Over time in HF+chol
-  gsea.log10.chol = gsea.log10
-  gsea.log10.chol = as.matrix(gsea.log10.chol)
-  rownames(gsea.log10.chol) = shortSetNames
+  gsea.log10 = as.matrix(gsea.log10)
+  rownames(gsea.log10) = shortSetNames
   
-  gsea.log10.chol = gsea.log10.chol[rowSums(abs(gsea.log10.chol) > -log10(pCutoff)) >= minSig,]
-  
-  saturateValues = function(values, satMin, valMin, satMax, valMax) {
-    values.sat = values
-    t(apply(values, 1, function(x) {
-      x[x < satMin] = valMin
-      x[x > satMax] = valMax
-      x
-    }))
-  }
+  hdata = gsea.log10[rowSums(abs(gsea.log10) > -log10(pCutoff)) >= minSig,]
   
   nc = 256
-  colors = colorRampPalette(c('blue', 'white', 'red'))(nc)
+  colors = colorRampPalette(c('blue', 'white', 'red'))(nc+2)
   breaks = seq(-minmax, minmax, (2*minmax)/(nc-1))
-  hdata = saturateValues(gsea.log10.chol, -minmax, -minmax, minmax, minmax)
+  breaks = c(min(hdata, na.rm=T), breaks, max(hdata, na.rm=T))
   colnames(hdata) = colNames
   pheatmap(
     hdata, cluster_cols = F, color = colors, scale = "none", breaks = breaks, ...
