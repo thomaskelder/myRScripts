@@ -89,9 +89,15 @@ performEnrichment = function(tscores, sets, ids = rownames(tscores), signed = F,
 }
 
 topEnrichmentGenes = function(gsea, sets, data, tCol, ids = rownames(data), pCutoff = 0.01, nrTop = nrow(data)) {
+  print(rownames(gsea))
   pcol = grep("^adj.pvalue.", colnames(gsea))
   gsea = gsea[gsea[,pcol] < pCutoff,]
   top = gsea[order(gsea[, pcol]), ]
+  
+  if(nrow(top) == 0) {
+    message("No significant sets!")
+    return(c())
+  }
   
   datSorted = data[order(abs(data[, tCol]), decreasing=T),]
   idsSorted = ids[order(abs(data[, tCol]), decreasing=T)]
@@ -111,6 +117,7 @@ topEnrichmentGenes = function(gsea, sets, data, tCol, ids = rownames(data), pCut
   datSummary = datSummary[2:nrow(datSummary),]
   datSummary
 }
+
 
 enrichmentHeatmap = function(gsea, signed = T, rowNameTruncate = 25, pCutoff = 0.001, minSig = 1, minmax = 6, setNames = rownames(gsea), colNames = colnames(gsea), ...) {
   gsea.signed = gsea
