@@ -141,3 +141,79 @@ enrichmentHeatmap = function(gsea, signed = T, rowNameTruncate = 25, pCutoff = 0
     hdata, cluster_cols = F, color = colors, scale = "none", breaks = breaks, ...
   )
 }
+
+getKeggDiseaseIds = function() {
+	keggDisease = c(
+		"Transcriptional misregulation in cancer",
+		"Chemical carcinogenesis",
+		"Viral carcinogenesis",
+		"Colorectal cancer",
+		"Pancreatic cancer",
+		"Glioma",
+		"Thyroid cancer",
+		"Acute myeloid leukemia",
+		"Chronic myeloid leukemia",
+		"Basal cell carcinoma",
+		"Melanoma",
+		"Renal cell carcinoma",
+		"Bladder cancer",
+		"Prostate cancer",
+		"Endometrial cancer",
+		"Small cell lung cancer",
+		"Non-small cell lung cancer",
+		"Asthma",
+		"Systemic lupus erythematosus",
+		"Rheumatoid arthritis",
+		"Autoimmune thyroid disease",
+		"Allograft rejection",
+		"Graft-versus-host disease",
+		"Primary immunodeficiency",	
+		"Alzheimer's disease",
+		"Parkinson's disease",
+		"Amyotrophic lateral sclerosis (ALS)",
+		"Huntington's disease",
+		"Prion diseases",	
+		"Cocaine addiction",
+		"Amphetamine addiction",
+		"Morphine addiction",
+		"Nicotine addiction",
+		"Alcoholism",	
+		"Hypertrophic cardiomyopathy (HCM)",
+		"Arrhythmogenic right ventricular cardiomyopathy (ARVC)",
+		"Dilated cardiomyopathy (DCM)",
+		"Viral myocarditis",	
+		"Type I diabetes mellitus",
+		"Type II diabetes mellitus",
+		"Maturity onset diabetes of the young",
+		"Vibrio cholerae infection",
+		"Vibrio cholerae pathogenic cycle",
+		"Epithelial cell signaling in Helicobacter pylori infection",
+		"Pathogenic Escherichia coli infection",
+		"Salmonella infection",
+		"Shigellosis",
+		"Pertussis",
+		"Legionellosis",
+		"Staphylococcus aureus infection",
+		"Tuberculosis",
+		"Bacterial invasion of epithelial cells",
+		"HTLV-I infection",
+		"Measles",
+		"Influenza A",
+		"Hepatitis C",
+		"Herpes simplex infection",
+		"Epstein-Barr virus infection",
+		"Amoebiasis",
+		"Malaria",
+		"Toxoplasmosis",
+		"Leishmaniasis",
+		"Chagas disease (American trypanosomiasis)",
+		"African trypanosomiasis"
+	)
+	
+	keggDiseaseID = toupper(keggDisease)
+	keggDiseaseID = gsub("[\\(\\)',-]{1}", "", keggDiseaseID)
+	keggDiseaseID = paste0("KEGG_", keggDiseaseID)
+	keggDiseaseID = gsub(" ", "_", keggDiseaseID)
+	
+	keggDiseaseID
+}
