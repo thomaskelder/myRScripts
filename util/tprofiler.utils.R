@@ -6,7 +6,7 @@ require(pheatmap)
 tprofilerHeatmap = function(
   gctFile, minSigSamples = 3, cutoffT = 4, minmax = 5, parseGroupsForSigSamples = NULL,
   colors = c('blue', 'white', 'red'), modifyColnames = function(x) x,
-  cellwidth = 8, cellheight = 8, 
+  cellwidth = 8, cellheight = 8, selectCols = function(x) x,
   clustering_distance_rows="correlation", clustering_distance_cols="correlation",
   ...
 ) {
@@ -15,6 +15,8 @@ tprofilerHeatmap = function(
   rownames(tprof) = tprof[,1]
   tprof = tprof[,3:ncol(tprof)]
   
+  tprof = tprof[, selectCols(colnames(tprof))]
+
   if(!is.null(parseGroupsForSigSamples)) {
     groupsForSigSamples = parseGroupsForSigSamples(colnames(tprof))
     groupSig = sapply(unique(groupsForSigSamples), function(g) {
