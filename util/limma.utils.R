@@ -71,3 +71,11 @@ sigCountsRange = function(fit, p.range = c(0.05, 0.01, 0.005, 0.001), adj.range 
   }
   sigCounts
 }
+
+groupCleanDataByType = function(data, type = c("^mean", "^T", "^logFC", "^p.value", "^adj.p.value")) {
+  sortedCols = c()
+  for(t in type) sortedCols = c(sortedCols, grep(t, colnames(data), value = T))
+  
+  nonsortCols = setdiff(colnames(data), sortedCols)
+  data[, c(nonsortCols, sortedCols)]
+}
