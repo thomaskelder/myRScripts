@@ -2,12 +2,12 @@
 ## Utility functions for T-profiler ##
 ######################################
 require(pheatmap)
-	
+
 tprofilerHeatmap = function(
   gctFile, minSigSamples = 3, cutoffT = 4, minmax = 5,
   colors = c('blue', 'white', 'red'), modifyColnames = function(x) x,
   cellwidth = 8, cellheight = 8, selectCols = function(x) x,
-  clustering_distance_rows="correlation", clustering_distance_cols="correlation",
+  clustering_distance_rows="correlation", clustering_distance_cols="correlation", excludeSigSampleGroups = c(),
   parseGroups = NULL, parseGroupsForSigSamples = parseGroups, clusterPerGroup = F, cluster_cols = T, colDist = function(x) as.dist(1 - cor(x)), colClustMeth = "complete", ...
 ) {
   
@@ -16,10 +16,12 @@ tprofilerHeatmap = function(
   tprof = tprof[,3:ncol(tprof)]
   
   tprof = tprof[, selectCols(colnames(tprof))]
-
+  
   if(!is.null(parseGroupsForSigSamples)) {
     groupsForSigSamples = parseGroupsForSigSamples(colnames(tprof))
-    groupSig = sapply(unique(groupsForSigSamples), function(g) {
+    groups = unique(groupsForSigSamples)
+    groups = setdiff(groups, excludeSigSampleGroups)
+    groupSig = sapply(groups, function(g) {
       rowSums(abs(tprof[, groupsForSigSamples == g]) > cutoffT) >= minSigSamples
     })
     tprof.filt = tprof[rowSums(groupSig) > 0,]
@@ -28,22 +30,22 @@ tprofilerHeatmap = function(
   }
   
   hdata = tprof.filt
-
-  if(clusterPerGroup & !is.null(parseGroups)) {
-   groups = parseGroups(colnames(hdata))
   
-	matlist = lapply(unique(groups), function(g) {
-		cols = colnames(hdata)[groups == g]
-		colorder = hclust(colDist(hdata[,cols]), method=colClustMeth)
-		cbind(hdata[, cols[colorder$order]], matrix(0, nrow = nrow(hdata), ncol = 1))
-	})
-	mat = matlist[[1]]
-	for(m in 2:length(matlist)) mat = cbind(mat, matlist[[m]])
-	mat = as.matrix(mat)
-   colnames(mat)[grep("^matrix\\(", colnames(mat))] = ""
-   mat = mat[, 1:(ncol(mat)-1)]
-	hdata = mat
-	cluster_cols = F
+  if(clusterPerGroup & !is.null(parseGroups)) {
+    groups = parseGroups(colnames(hdata))
+    
+    matlist = lapply(unique(groups), function(g) {
+      cols = colnames(hdata)[groups == g]
+      colorder = hclust(colDist(hdata[,cols]), method=colClustMeth)
+      cbind(hdata[, cols[colorder$order]], matrix(0, nrow = nrow(hdata), ncol = 1))
+    })
+    mat = matlist[[1]]
+    for(m in 2:length(matlist)) mat = cbind(mat, matlist[[m]])
+    mat = as.matrix(mat)
+    colnames(mat)[grep("^matrix\\(", colnames(mat))] = ""
+    mat = mat[, 1:(ncol(mat)-1)]
+    hdata = mat
+    cluster_cols = F
   }
   
   colnames(hdata) = modifyColnames(colnames(hdata))
