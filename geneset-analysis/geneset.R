@@ -88,9 +88,10 @@ performEnrichment = function(tscores, sets, ids = rownames(tscores), signed = F,
   as.data.frame(gsea.list, stringsAsFactors=F)
 }
 
-topEnrichmentGenes = function(gsea, sets, data, tCol, ids = rownames(data), pCutoff = 0.01, nrTop = nrow(data)) {
+topEnrichmentGenes = function(gsea, sets, data, tCol, ids = rownames(data), pCutoff = 0.01, nrTop = nrow(data), pCol = "^adj.pvalue.") {
   print(rownames(gsea))
-  pcol = grep("^adj.pvalue.", colnames(gsea))
+  pcol = grep(pCol, colnames(gsea))
+  print(pcol)
   gsea = gsea[gsea[,pcol] < pCutoff,]
   top = gsea[order(gsea[, pcol]), ]
   
@@ -117,7 +118,6 @@ topEnrichmentGenes = function(gsea, sets, data, tCol, ids = rownames(data), pCut
   datSummary = datSummary[2:nrow(datSummary),]
   datSummary
 }
-
 
 enrichmentHeatmap = function(gsea, signed = T, rowNameTruncate = 25, pCutoff = 0.001, minSig = 1, minmax = 6, setNames = rownames(gsea), colNames = colnames(gsea), ...) {
   gsea.signed = gsea
