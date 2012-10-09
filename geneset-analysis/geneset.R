@@ -88,6 +88,20 @@ performEnrichment = function(tscores, sets, ids = rownames(tscores), signed = F,
   as.data.frame(gsea.list, stringsAsFactors=F)
 }
 
+buildEnrichmentTable = function(gsea.signed, gsea.mixed) {
+  #gsea.signed = performEnrichment(tscores.bygene, sets, alternative = "either", signed = T)
+  #gsea.mixed = performEnrichment(tscores.bygene, sets, alternative = "mixed", signed = F)
+
+  gsea = gsea.signed
+  colnames(gsea)[grep("pvalue", colnames(gsea))] = paste("abs signed", grep("pvalue", colnames(gsea), value = T))
+  signed.fortable = gsea.signed[, grep("pvalue", colnames(gsea.signed))]
+  colnames(signed.fortable) = paste("signed ", colnames(signed.fortable))
+  gsea = cbind(gsea, signed.fortable, gsea.mixed[, grep("pvalue", colnames(gsea.mixed))])
+  gsea[, grep("abs", colnames(gsea))] = abs(gsea[, grep("abs", colnames(gsea))])
+
+  gsea
+}
+
 topEnrichmentGenes = function(gsea, sets, data, tCol, ids = rownames(data), pCutoff = 0.01, nrTop = nrow(data), pCol = "^adj.pvalue.") {
   print(rownames(gsea))
   pcol = grep(pCol, colnames(gsea))
