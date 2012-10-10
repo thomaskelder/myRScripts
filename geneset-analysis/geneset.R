@@ -8,6 +8,11 @@ defaultSetFilter = function(set) {
   bcSubCategory(collectionType(set)) != "CGP"
 }
 
+noGOnoCGPSetFilter = function(set) {
+     bcCategory(collectionType(set)) %in% c("c2", "c3", "c5") &
+         !(bcSubCategory(collectionType(set)) %in% c("CGP", "CC", "MF", "BP"))
+}
+
 loadBroadSets = function(broadXml = NULL, cache = NULL, filterFun = defaultSetFilter) {
   if(!is.null(cache)) {
     message("Using cache ", cache)
