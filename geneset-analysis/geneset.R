@@ -228,7 +228,8 @@ getKeggDiseaseIds = function() {
 		"Toxoplasmosis",
 		"Leishmaniasis",
 		"Chagas disease (American trypanosomiasis)",
-		"African trypanosomiasis"
+		"African trypanosomiasis",
+                "Leishmania infection"
 	)
 	
 	keggDiseaseID = toupper(keggDisease)
