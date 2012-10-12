@@ -168,6 +168,29 @@ enrichmentHeatmap = function(gsea, signed = T, rowNameTruncate = 25, pCutoff = 0
   )
 }
 
+getGOSets = function(goAnn, minSize = c(BP = 15, MF = 15, CC = 15), maxSize = c(BP = 500, MF = 500, CC = 500), ontologies = c("BP", "MF", "CC"), evidence = c("IDA", "IPI", "IMP", "IGI", "IEP", "ISS", "TAS")) {
+  annList = as.list(goAnn)
+  print(length(annList))
+  sel = sapply(names(annList), function(x) {
+    xt = GOTERM[[x]]
+    xo = Ontology(xt)
+    xo %in% ontologies &&
+      length(annList[[x]]) >= minSize[xo] &&
+      length(annList[[x]]) <= maxSize[xo]
+  })
+  annList = annList[sel]
+  print(length(annList))
+  terms = names(annList)
+  gosets = lapply(terms, function(t) {
+    geneIds = annList[[t]][names(annList[[t]]) %in% evidence]
+    geneIds = unique(as.character(geneIds))
+    geneSet = GeneSet(geneIds, geneIdType=EntrezIdentifier(), 
+                      setName=Term(GOTERM[[t]]))
+  })
+  names(gosets) = sapply(gosets, setName)
+  gosets
+}
+
 getKeggDiseaseIds = function() {
 	keggDisease = c(
 		"Transcriptional misregulation in cancer",
