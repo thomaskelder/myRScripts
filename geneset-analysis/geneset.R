@@ -139,7 +139,7 @@ topEnrichmentGenes = function(gsea, sets, data, tCol, ids = rownames(data), pCut
   datSummary
 }
 
-enrichmentHeatmap = function(gsea, signed = T, rowNameTruncate = 25, pCutoff = 0.001, minSig = 1, minmax = 6, setNames = rownames(gsea), colNames = colnames(gsea), ...) {
+enrichmentHeatmap = function(gsea, signed = T, rowNameTruncate = 25, pCutoff = 0.001, minSig = 1, minmax = 6, setNames = rownames(gsea), colNames = colnames(gsea), parseGroups = NULL, cluster_cols = T, colDist = function(x) as.dist(1 - cor(x)), colClustMeth = "complete", ...) {
   gsea.signed = gsea
   if(signed) {
     gsea = abs(gsea.signed)
@@ -158,14 +158,32 @@ enrichmentHeatmap = function(gsea, signed = T, rowNameTruncate = 25, pCutoff = 0
   rownames(gsea.log10) = shortSetNames
   
   hdata = gsea.log10[rowSums(abs(gsea.log10) > -log10(pCutoff)) >= minSig,]
+  colnames(hdata) = colNames
+  
+  if(!is.null(parseGroups)) {
+    groups = parseGroups(colnames(hdata))
+    print(groups)
+    matlist = lapply(unique(groups), function(g) {
+      cols = colnames(hdata)[groups == g]
+      if(cluster_cols) colorder = hclust(colDist(hdata[,cols]), method=colClustMeth)$order
+      else colorder = 1:length(cols)
+      cbind(hdata[, cols[colorder]], matrix(0, nrow = nrow(hdata), ncol = 1))
+    })
+    mat = matlist[[1]]
+    for(m in 2:length(matlist)) mat = cbind(mat, matlist[[m]])
+    mat = as.matrix(mat)
+    colnames(mat)[grep("^matrix\\(", colnames(mat))] = ""
+    mat = mat[, 1:(ncol(mat)-1)]
+    hdata = mat
+    cluster_cols = F
+  }
   
   nc = 256
   colors = colorRampPalette(c('blue', 'white', 'red'))(nc+2)
   breaks = seq(-minmax, minmax, (2*minmax)/(nc-1))
   breaks = c(min(hdata, na.rm=T), breaks, max(hdata, na.rm=T))
-  colnames(hdata) = colNames
   pheatmap(
-    hdata, cluster_cols = F, color = colors, scale = "none", breaks = breaks, ...
+    hdata, cluster_cols = cluster_cols, color = colors, scale = "none", breaks = breaks, ...
   )
 }
 
