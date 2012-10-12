@@ -210,6 +210,26 @@ getGOSets = function(goAnn, minSize = c(BP = 15, MF = 15, CC = 15), maxSize = c(
   gosets
 }
 
+pruneByOverlap = function(sets, gsea, colPattern = "signed adj.pvalue", maxOvl = 0.8, pCutoff = 1) {
+	apply(gsea[, grep("signed adj.pvalue", colnames(gsea))], 2, function(pvals) {
+	  psort = sort(abs(pvals))
+	  psort = psort[psort < pCutoff]
+	  ssort = sets[names(psort)]
+	  include = names(psort)
+	  for(sn in names(psort)) {
+		 s1 = ssort[[sn]]
+		 i = which(names(ssort) == sn)
+		 if(!(sn %in% include)) next
+		 ovl = sapply(ssort[(i+1):length(ssort)], function(s2) {
+		   length(intersect(s1, s2)) / min(c(length(s1), length(s2)))
+		 })
+		 ovl[is.na(ovl)] = 0
+		 include = setdiff(include, names(ovl)[ovl > maxOvl])
+	  }
+	  include
+	})
+}
+
 getKeggDiseaseIds = function() {
 	keggDisease = c(
 		"Transcriptional misregulation in cancer",
