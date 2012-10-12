@@ -2,6 +2,7 @@
 ## Functions for gene set analysis ##
 #####################################
 library(GSEABase)
+library(GO.db)
 
 defaultSetFilter = function(set) {
   bcCategory(collectionType(set)) %in% c("c2", "c3", "c5") &
