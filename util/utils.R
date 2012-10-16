@@ -18,3 +18,20 @@ listFiles = function(paths, ext) {
   files = append(files, paths[!dirs])
   files
 }
+
+## Map a list of entrez ids to another species by homology
+## Use one of the hom.* bioconductor packages to provide homology information and the org.*
+## packages to provide mappings from gene to ensembl protein
+#inProt = org.Hs.egENSEMBLPROT, outProt = org.Mm.egENSEMBLPROT2EG, homology = hom.Hs.inpMUSMU
+mapEntrezToSpecies = function(ids, inProt, outProt, homology) {
+  message("mapping to proteins")
+  ip = unlist(mget(ids, inProt, ifnotfound=NA))
+  ip = ip[!is.na(ip)]
+  message("mapping to homolog proteins")
+  op = unlist(mget(ip, homology, ifnotfound=NA))
+  op = op[!is.na(op)]
+  message("mapping to homolog genes")
+  oe = unlist(mget(op, outProt, ifnotfound=NA))
+  oe = oe[!is.na(oe)]
+  unique(oe)
+}
