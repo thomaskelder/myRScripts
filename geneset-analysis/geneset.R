@@ -2,10 +2,16 @@
 ## Functions for gene set analysis ##
 #####################################
 library(GSEABase)
+library(GO.db)
 
 defaultSetFilter = function(set) {
   bcCategory(collectionType(set)) %in% c("c2", "c3", "c5") &
   bcSubCategory(collectionType(set)) != "CGP"
+}
+
+noGOnoCGPSetFilter = function(set) {
+     bcCategory(collectionType(set)) %in% c("c2", "c3", "c5") &
+         !(bcSubCategory(collectionType(set)) %in% c("CGP", "CC", "MF", "BP"))
 }
 
 loadBroadSets = function(broadXml = NULL, cache = NULL, filterFun = defaultSetFilter) {
@@ -88,9 +94,24 @@ performEnrichment = function(tscores, sets, ids = rownames(tscores), signed = F,
   as.data.frame(gsea.list, stringsAsFactors=F)
 }
 
-topEnrichmentGenes = function(gsea, sets, data, tCol, ids = rownames(data), pCutoff = 0.01, nrTop = nrow(data)) {
+buildEnrichmentTable = function(gsea.signed, gsea.mixed) {
+  #gsea.signed = performEnrichment(tscores.bygene, sets, alternative = "either", signed = T)
+  #gsea.mixed = performEnrichment(tscores.bygene, sets, alternative = "mixed", signed = F)
+
+  gsea = gsea.signed
+  colnames(gsea)[grep("pvalue", colnames(gsea))] = paste("abs signed", grep("pvalue", colnames(gsea), value = T))
+  signed.fortable = gsea.signed[, grep("pvalue", colnames(gsea.signed))]
+  colnames(signed.fortable) = paste("signed ", colnames(signed.fortable))
+  gsea = cbind(gsea, signed.fortable, gsea.mixed[, grep("pvalue", colnames(gsea.mixed))])
+  gsea[, grep("abs", colnames(gsea))] = abs(gsea[, grep("abs", colnames(gsea))])
+
+  gsea
+}
+
+topEnrichmentGenes = function(gsea, sets, data, tCol, ids = rownames(data), pCutoff = 0.01, nrTop = nrow(data), pCol = "^adj.pvalue.") {
   print(rownames(gsea))
-  pcol = grep("^adj.pvalue.", colnames(gsea))
+  pcol = grep(pCol, colnames(gsea))
+  print(pcol)
   gsea = gsea[gsea[,pcol] < pCutoff,]
   top = gsea[order(gsea[, pcol]), ]
   
@@ -118,8 +139,7 @@ topEnrichmentGenes = function(gsea, sets, data, tCol, ids = rownames(data), pCut
   datSummary
 }
 
-
-enrichmentHeatmap = function(gsea, signed = T, rowNameTruncate = 25, pCutoff = 0.001, minSig = 1, minmax = 6, setNames = rownames(gsea), colNames = colnames(gsea), ...) {
+enrichmentHeatmap = function(gsea, signed = T, rowNameTruncate = 25, pCutoff = 0.001, minSig = 1, minmax = 6, setNames = rownames(gsea), colNames = colnames(gsea), parseGroups = NULL, cluster_cols = T, colDist = function(x) as.dist(1 - cor(x)), colClustMeth = "complete", ...) {
   gsea.signed = gsea
   if(signed) {
     gsea = abs(gsea.signed)
@@ -138,15 +158,76 @@ enrichmentHeatmap = function(gsea, signed = T, rowNameTruncate = 25, pCutoff = 0
   rownames(gsea.log10) = shortSetNames
   
   hdata = gsea.log10[rowSums(abs(gsea.log10) > -log10(pCutoff)) >= minSig,]
+  colnames(hdata) = colNames
+  
+  if(!is.null(parseGroups)) {
+    groups = parseGroups(colnames(hdata))
+    print(groups)
+    matlist = lapply(unique(groups), function(g) {
+      cols = colnames(hdata)[groups == g]
+      if(cluster_cols) colorder = hclust(colDist(hdata[,cols]), method=colClustMeth)$order
+      else colorder = 1:length(cols)
+      cbind(hdata[, cols[colorder]], matrix(0, nrow = nrow(hdata), ncol = 1))
+    })
+    mat = matlist[[1]]
+    for(m in 2:length(matlist)) mat = cbind(mat, matlist[[m]])
+    mat = as.matrix(mat)
+    colnames(mat)[grep("^matrix\\(", colnames(mat))] = ""
+    mat = mat[, 1:(ncol(mat)-1)]
+    hdata = mat
+    cluster_cols = F
+  }
   
   nc = 256
   colors = colorRampPalette(c('blue', 'white', 'red'))(nc+2)
   breaks = seq(-minmax, minmax, (2*minmax)/(nc-1))
   breaks = c(min(hdata, na.rm=T), breaks, max(hdata, na.rm=T))
-  colnames(hdata) = colNames
   pheatmap(
-    hdata, cluster_cols = F, color = colors, scale = "none", breaks = breaks, ...
+    hdata, cluster_cols = cluster_cols, color = colors, scale = "none", breaks = breaks, ...
   )
+}
+
+getGOSets = function(goAnn, minSize = c(BP = 15, MF = 15, CC = 15), maxSize = c(BP = 500, MF = 500, CC = 500), ontologies = c("BP", "MF", "CC"), evidence = c("IDA", "IPI", "IMP", "IGI", "IEP", "ISS", "TAS")) {
+  annList = as.list(goAnn)
+  print(length(annList))
+  sel = sapply(names(annList), function(x) {
+    xt = GOTERM[[x]]
+    xo = Ontology(xt)
+    xo %in% ontologies &&
+      length(annList[[x]]) >= minSize[xo] &&
+      length(annList[[x]]) <= maxSize[xo]
+  })
+  annList = annList[sel]
+  print(length(annList))
+  terms = names(annList)
+  gosets = lapply(terms, function(t) {
+    geneIds = annList[[t]][names(annList[[t]]) %in% evidence]
+    geneIds = unique(as.character(geneIds))
+    geneSet = GeneSet(geneIds, geneIdType=EntrezIdentifier(), 
+                      setName=Term(GOTERM[[t]]))
+  })
+  names(gosets) = sapply(gosets, setName)
+  gosets
+}
+
+pruneByOverlap = function(sets, gsea, colPattern = "signed adj.pvalue", maxOvl = 0.8, pCutoff = 1) {
+	apply(gsea[, grep("signed adj.pvalue", colnames(gsea))], 2, function(pvals) {
+	  psort = sort(abs(pvals))
+	  psort = psort[psort < pCutoff]
+	  ssort = sets[names(psort)]
+	  include = names(psort)
+	  for(sn in names(psort)) {
+		 s1 = ssort[[sn]]
+		 i = which(names(ssort) == sn)
+		 if(!(sn %in% include)) next
+		 ovl = sapply(ssort[(i+1):length(ssort)], function(s2) {
+		   length(intersect(s1, s2)) / min(c(length(s1), length(s2)))
+		 })
+		 ovl[is.na(ovl)] = 0
+		 include = setdiff(include, names(ovl)[ovl > maxOvl])
+	  }
+	  include
+	})
 }
 
 getKeggDiseaseIds = function() {
@@ -214,7 +295,8 @@ getKeggDiseaseIds = function() {
 		"Toxoplasmosis",
 		"Leishmaniasis",
 		"Chagas disease (American trypanosomiasis)",
-		"African trypanosomiasis"
+		"African trypanosomiasis",
+                "Leishmania infection"
 	)
 	
 	keggDiseaseID = toupper(keggDisease)
