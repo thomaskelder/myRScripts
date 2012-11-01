@@ -30,7 +30,7 @@ createCleanDataTable = function(normData, fit, contrasts, groups, annot = NULL, 
   
   ## Average per group
   for(g in unique(groups)) {
-    avg = rowMeans(normData[, groups == g], na.rm = T)
+    avg = rowMeans(normData[, groups == g, drop=F], na.rm = T)
     cleanTable = cbind(cleanTable, avg)
     colnames(cleanTable)[ncol(cleanTable)] = paste0("mean_", g)
   }
