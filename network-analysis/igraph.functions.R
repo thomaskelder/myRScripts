@@ -271,9 +271,15 @@ filterCommunitiesByEdgeCount = function(g, attr, min.edges.per.node) {
 
 removeUndirectedMultipleEdges = function(g, dirAttr = "Directed", undirValue = "false") {
   rmEdges = c()
+  i = 0
+  el = get.edgelist(g)
   for(e in E(g)) {
+    if(i %% 100 == 0) {
+      i = i + 1
+      message(i, " out of ", ecount(g))
+    }
     if(!(e %in% rmEdges)) {
-      en = get.edge(g, e)
+      en = el[e,]
       er = E(g)[en[2] %->% en[1]]
       if(length(er) > 0 && get.edge.attribute(g, dirAttr, er) == undirValue) {
         rmEdges = c(rmEdges, er)
