@@ -29,6 +29,7 @@ if(!file.exists("graphitePathways.RData")) {
   load("graphitePathways.RData")
 }
 
+## Mouse
 graphiteMouse = foreach(p=graphitePathways , .verbose = T) %dopar% {
   library(graphite)
   library(hom.Hs.inp.db)
@@ -42,3 +43,18 @@ save(graphiteMouse, file = "graphitePathwaysMouse.RData");
 graphiteMouseGraph = pathwaysToIGraph(graphiteMouse)
 save(graphiteMouseGraph, file = "graphiteGraphMouse.RData")
 saveGML(graphiteMouseGraph, fileName = "graphiteGraphMouse.gml", "Graphite-mouse")
+
+## Rat
+graphiteRat = foreach(p=graphitePathways , .verbose = T) %dopar% {
+  library(graphite)
+  library(hom.Hs.inp.db)
+  library(org.Rn.eg.db)
+  library(org.Hs.eg.db)
+  pathwayToSpecies(p, homology = hom.Hs.inpRATNO, outProt = org.Rn.egENSEMBLPROT2EG)
+}
+names(graphiteRat) = names(graphitePathways)
+save(graphiteRat, file = "graphitePathwaysRat.RData");
+
+graphiteRatGraph = pathwaysToIGraph(graphiteRat)
+save(graphiteRatGraph, file = "graphiteGraphRat.RData")
+saveGML(graphiteRatGraph, fileName = "graphiteGraphRat.gml", "Graphite-rat")
