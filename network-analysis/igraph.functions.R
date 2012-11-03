@@ -293,7 +293,7 @@ removeUndirectedMultipleEdges = function(g, dirAttr = "Directed", undirValue = "
 ## Convenience function to perform community  ##
 ## finding and annotate communities with GO   ##
 ################################################
-detectAndAnnotateCommunities = function(g, clustAttr = "cluster", organism = "mouse", componentsAsClusterSize = NULL, ...) {
+detectAndAnnotateCommunities = function(g, clustAttr = "cluster", organism = "mouse", componentsAsClusterSize = NULL, min.edges.per.node = 0, ...) {
   components = decompose.graph(g, "weak")
   components = components[order(sapply(components, vcount), decreasing=T)]
   components = components[sapply(components, vcount) > 2]
@@ -303,7 +303,7 @@ detectAndAnnotateCommunities = function(g, clustAttr = "cluster", organism = "mo
     g, 
     communities, 
     components, attr = clustAttr,
-    min.edges.per.node = 0,
+    min.edges.per.node = min.edges.per.node,
     componentsAsClusterSize = componentsAsClusterSize
   )
   
