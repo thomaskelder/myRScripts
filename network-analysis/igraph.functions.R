@@ -170,8 +170,8 @@ dataToGraph = function(graph, data, cols, matchCol, edges = T, nodes = T, edge.f
       
       edgeWeights = sapply(E(graph), function(e) {
         edge = get.edge(graph, e)
-        v1 = nodeWeights[edge[1] + 1]
-        v2 = nodeWeights[edge[2] + 1]
+        v1 = nodeWeights[edge[1]]
+        v2 = nodeWeights[edge[2]]
         if(is.na(v1)) v1 = edge.na
         if(is.na(v2)) v2 = edge.na
         edge.function(v1, v2)
