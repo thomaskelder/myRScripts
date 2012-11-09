@@ -198,7 +198,7 @@ dataToNodes = function(graph, data) {
 ## Remove unconnected nodes from graph ##
 #########################################
 removeLonelyNodes = function(g) {
-  induced.subgraph(g, which(igraph::degree(g) != 0) - 1)
+  induced.subgraph(g, which(igraph::degree(g) != 0))
 }
 
 #########################################
