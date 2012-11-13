@@ -1,7 +1,6 @@
 ################################################
 ## Convert graphite pathways to other species ##
 ################################################
-
 library(foreach)
 library(doMC)
 registerDoMC(cores = 25)

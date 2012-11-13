@@ -68,34 +68,3 @@ pathwaysToIGraph = function(pathways) {
   
   graph
 }
-
-runGraphiteSPIA = function(pathways, de, all) {
-  
-}
-
-runSPIA <- function(de, all, pathwaySetName, ...) {
-  if (!require(SPIA))
-    stop("library SPIA is missing")
-  
-  checkPkgVersion("SPIA", "2.2")
-  
-  if (!(datasetName(pathwaySetName) %in% dir()))
-    stop("There is no dataset corresponding to the pathway set name: ", pathwaySetName, "\n",
-         "Did you forget to run prepareSPIA?")
-  
-  optArgs <- list(...)
-  if (!is.null(optArgs$organism))
-    warning("Ignoring the \"organism\" parameter.")
-  optArgs$organism <- pathwaySetName
-  
-  spiaEnv <- environment(spia)
-  fakeEnv <- new.env(parent=spiaEnv)
-  assign("system.file", fakeSystemFile, fakeEnv)
-  
-  tryCatch({
-    environment(spia) <- fakeEnv
-    do.call(spia, c(list(de, all), optArgs))[,c(-2,-12)]
-  }, finally={
-    environment(spia) <- spiaEnv
-  })
-}
