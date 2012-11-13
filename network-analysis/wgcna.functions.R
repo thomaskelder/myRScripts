@@ -21,7 +21,7 @@ plotTraitMod = function(datTraits, trait, MEs, outPath, group, mod, r = "", titl
 	dev.off()
 }
 
-plotTraitCorrelations = function(moduleTraitCor, moduleTraitPvalue, MEs, datTraits, file = NULL, plotPvalue = T, windowSize = c(10,6), colors = blueWhiteRed(50), plotR = T) {
+plotTraitCorrelations = function(moduleTraitCor, moduleTraitPvalue, MEs, datTraits, file = NULL, plotPvalue = T, windowSize = c(10,6), colors = blueWhiteRed(50), plotR = T, xLabels = colnames(datTraits)) {
   sizeGrWindow(windowSize[1], windowSize[2])
   textMatrix = NULL
   if(plotR) {
@@ -34,7 +34,7 @@ plotTraitCorrelations = function(moduleTraitCor, moduleTraitPvalue, MEs, datTrai
   if(!is.null(textMatrix)) dim(textMatrix) = dim(moduleTraitCor)
   par(mar = c(6, 8.5, 3, 3))
   labeledHeatmap(Matrix = moduleTraitCor,
-                 xLabels = colnames(datTraits),
+                 xLabels = xLabels,
                  yLabels = names(MEs),
                  ySymbols = names(MEs),
                  colorLabels = FALSE,
