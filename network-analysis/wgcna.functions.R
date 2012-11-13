@@ -45,7 +45,7 @@ plotTraitCorrelations = function(moduleTraitCor, moduleTraitPvalue, MEs, datTrai
   if(!is.null(file)) dev.copy2pdf(file = file)
 }
 
-plotSoftThreshold = function(sft, rs, file = NULL) {
+plotSoftThreshold = function(sft, rs, file = NULL, powers = NULL) {
   ## Evaluate soft threshold
   sizeGrWindow(9, 5)
   par(mfrow = c(1,2));
