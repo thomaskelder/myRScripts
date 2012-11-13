@@ -170,8 +170,8 @@ dataToGraph = function(graph, data, cols, matchCol, edges = T, nodes = T, edge.f
       
       edgeWeights = sapply(E(graph), function(e) {
         edge = get.edge(graph, e)
-        v1 = nodeWeights[edge[1] + 1]
-        v2 = nodeWeights[edge[2] + 1]
+        v1 = nodeWeights[edge[1]]
+        v2 = nodeWeights[edge[2]]
         if(is.na(v1)) v1 = edge.na
         if(is.na(v2)) v2 = edge.na
         edge.function(v1, v2)
@@ -198,7 +198,7 @@ dataToNodes = function(graph, data) {
 ## Remove unconnected nodes from graph ##
 #########################################
 removeLonelyNodes = function(g) {
-  induced.subgraph(g, which(igraph::degree(g) != 0) - 1)
+  induced.subgraph(g, which(igraph::degree(g) != 0))
 }
 
 #########################################
@@ -271,9 +271,15 @@ filterCommunitiesByEdgeCount = function(g, attr, min.edges.per.node) {
 
 removeUndirectedMultipleEdges = function(g, dirAttr = "Directed", undirValue = "false") {
   rmEdges = c()
+  i = 0
+  el = get.edgelist(g)
   for(e in E(g)) {
+    if(i %% 100 == 0) {
+      i = i + 1
+      message(i, " out of ", ecount(g))
+    }
     if(!(e %in% rmEdges)) {
-      en = get.edge(g, e)
+      en = el[e,]
       er = E(g)[en[2] %->% en[1]]
       if(length(er) > 0 && get.edge.attribute(g, dirAttr, er) == undirValue) {
         rmEdges = c(rmEdges, er)
@@ -287,7 +293,7 @@ removeUndirectedMultipleEdges = function(g, dirAttr = "Directed", undirValue = "
 ## Convenience function to perform community  ##
 ## finding and annotate communities with GO   ##
 ################################################
-detectAndAnnotateCommunities = function(g, clustAttr = "cluster", organism = "mouse", componentsAsClusterSize = NULL, ...) {
+detectAndAnnotateCommunities = function(g, clustAttr = "cluster", organism = "mouse", componentsAsClusterSize = NULL, min.edges.per.node = 0, ...) {
   components = decompose.graph(g, "weak")
   components = components[order(sapply(components, vcount), decreasing=T)]
   components = components[sapply(components, vcount) > 2]
@@ -297,7 +303,7 @@ detectAndAnnotateCommunities = function(g, clustAttr = "cluster", organism = "mo
     g, 
     communities, 
     components, attr = clustAttr,
-    min.edges.per.node = 0,
+    min.edges.per.node = min.edges.per.node,
     componentsAsClusterSize = componentsAsClusterSize
   )
   

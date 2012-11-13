@@ -21,31 +21,34 @@ plotTraitMod = function(datTraits, trait, MEs, outPath, group, mod, r = "", titl
 	dev.off()
 }
 
-plotTraitCorrelations = function(moduleTraitCor, moduleTraitPvalue, MEs, datTraits, file = NULL, plotPvalue = T, windowSize = c(10,6), colors = greenWhiteRed(50)) {
+plotTraitCorrelations = function(moduleTraitCor, moduleTraitPvalue, MEs, datTraits, file = NULL, plotPvalue = T, windowSize = c(10,6), colors = blueWhiteRed(50), plotR = T, xLabels = colnames(datTraits), ...) {
   sizeGrWindow(windowSize[1], windowSize[2])
-  textMatrix = signif(moduleTraitCor, 2)
-  if(plotPvalue) {
-  	textMatrix = paste(textMatrix, "\n(",
-  	  signif(moduleTraitPvalue, 1), ")", sep = "")
+  textMatrix = NULL
+  if(plotR) {
+    textMatrix = signif(moduleTraitCor, 2)
   }
-  dim(textMatrix) = dim(moduleTraitCor)
+  if(plotPvalue) {
+    textMatrix = paste(textMatrix, "\n(",
+                       signif(moduleTraitPvalue, 1), ")", sep = "")
+  }
+  if(!is.null(textMatrix)) dim(textMatrix) = dim(moduleTraitCor)
   par(mar = c(6, 8.5, 3, 3))
   labeledHeatmap(Matrix = moduleTraitCor,
-    xLabels = colnames(datTraits),
-    yLabels = names(MEs),
-    ySymbols = names(MEs),
-    colorLabels = FALSE,
-    colors = colors,
-    textMatrix = textMatrix,
-    setStdMargins = FALSE,
-    cex.text = 0.5,
-    zlim = c(-1,1),
-    main = paste("Module-trait relationships"))
+                 xLabels = xLabels,
+                 yLabels = names(MEs),
+                 ySymbols = names(MEs),
+                 colorLabels = FALSE,
+                 colors = colors,
+                 textMatrix = textMatrix,
+                 setStdMargins = FALSE,
+                 cex.text = 0.5,
+                 zlim = c(-1,1),
+                 main = paste("Module-trait relationships"), ...)
   
   if(!is.null(file)) dev.copy2pdf(file = file)
 }
 
-plotSoftThreshold = function(sft, rs, file = NULL) {
+plotSoftThreshold = function(sft, rs, file = NULL, powers = NULL) {
   ## Evaluate soft threshold
   sizeGrWindow(9, 5)
   par(mfrow = c(1,2));
