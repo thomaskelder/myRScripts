@@ -1,3 +1,12 @@
+toExcel = function(path, xls) {
+  require(devtools)
+  options(java.parameters = "-Xmx2048m")
+  source_url("https://raw.github.com/thomaskelder/myRScripts/master/util/excel.R")
+  files = listFiles(path, ext = "txt")
+  file.remove(xls)
+  textFilesToExcel(files, xls)
+}
+
 performORA = function(set, all) {
 	set = as.logical(set)
 	all = as.logical(all)
