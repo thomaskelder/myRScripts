@@ -16,3 +16,8 @@ createOrGetEntity = function(entity) {
 filesFromEntity = function(entity) {
   paste(entity$cacheDir, entity$files, sep="/")
 }
+
+loadSynapseData = function(id) {
+  ent = downloadEntity(id)
+  load(filesFromEntity(ent), .GlobalEnv)
+}
