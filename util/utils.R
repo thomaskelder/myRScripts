@@ -44,3 +44,16 @@ mapEntrezToSpecies = function(ids, inProt, outProt, homology) {
   oe = oe[!is.na(oe)]
   unique(oe)
 }
+
+
+getLumiAnnot = function(nu.ids, pkg = "lumiMouseAll.db") {
+  require(pkg, character.only = T)
+  nu.annot = nuID2IlluminaID(nu.ids, lib.mapping = "lumiMouseIDMapping", idType = "All")
+  
+  cbind(
+    probeId = nu.annot,
+    entrez = as.character(mget(nu.ids, lumiMouseAllENTREZID)),
+    symbol = as.character(mget(nu.ids, lumiMouseAllSYMBOL)),
+    geneName = as.character(mget(nu.ids, lumiMouseAllGENENAME))
+  )
+}
