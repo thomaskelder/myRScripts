@@ -2,6 +2,8 @@
 ## Utility functions for T-profiler ##
 ######################################
 require(pheatmap)
+require(devtools)
+source_url("https://raw.github.com/thomaskelder/myRScripts/master/util/heatmap.R")
 
 tprofilerHeatmap = function(
   gctFile, minSigSamples = 3, cutoffT = 4, minmax = 5,
@@ -16,7 +18,6 @@ tprofilerHeatmap = function(
   tprof = tprof[,3:ncol(tprof)]
   
   tprof = tprof[, selectCols(colnames(tprof))]
-  
   if(!is.null(parseGroupsForSigSamples)) {
     groupsForSigSamples = parseGroupsForSigSamples(colnames(tprof))
     groups = unique(groupsForSigSamples)
@@ -29,34 +30,11 @@ tprofilerHeatmap = function(
     tprof.filt = tprof[rowSums(abs(tprof) > cutoffT) >= minSigSamples,]
   }
   
-  hdata = tprof.filt
-  
-  if(clusterPerGroup & !is.null(parseGroups)) {
-    groups = parseGroups(colnames(hdata))
-    
-    matlist = lapply(unique(groups), function(g) {
-      cols = colnames(hdata)[groups == g]
-      colorder = hclust(colDist(hdata[,cols]), method=colClustMeth)
-      cbind(hdata[, cols[colorder$order]], matrix(0, nrow = nrow(hdata), ncol = 1))
-    })
-    mat = matlist[[1]]
-    for(m in 2:length(matlist)) mat = cbind(mat, matlist[[m]])
-    mat = as.matrix(mat)
-    colnames(mat)[grep("^matrix\\(", colnames(mat))] = ""
-    mat = mat[, 1:(ncol(mat)-1)]
-    hdata = mat
-    cluster_cols = F
-  }
-  
-  colnames(hdata) = modifyColnames(colnames(hdata))
-  nc = 256
-  colors = colorRampPalette(colors)(nc+2)
-  breaks = seq(-minmax, minmax, (2*minmax)/(nc-1))
-  breaks = c(min(hdata, na.rm=T)-1, breaks, max(hdata, na.rm=T)+1)
-  pheatmap(
-    hdata, color = colors, scale = "none", breaks = breaks,
-    cellwidth = cellwidth, cellheight = cellheight, 
-    clustering_distance_rows=clustering_distance_rows, clustering_distance_cols=clustering_distance_cols,
-    cluster_cols = cluster_cols, ...
+  groupedHeatmap(
+    tprof.filt, minmax = minmax, colors = colors, modifyColnames = modifyColnames,
+    cellwidth = cellwidth, cellheight = cellheight,
+    clustering_distance_rows = clustering_distance_rows, clustering_distance_cols = clustering_distance_cols,
+    parseGroups = parseGroups, clusterPerGroup = clusterPerGroup, cluster_cols = cluster_cols, 
+    colDist = colDist, colClustMeth = colClustMeth, ...
   )
 }
