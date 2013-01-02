@@ -5,17 +5,26 @@ require(pheatmap)
 require(devtools)
 source_url("https://raw.github.com/thomaskelder/myRScripts/master/util/heatmap.R")
 
+loadTprofilerResults = function(file) {
+  tprof = read.delim(file, as.is=T, skip = 3)
+  rownames(tprof) = tprof[,1]
+  tprof = tprof[,3:ncol(tprof)]
+  tprof
+}
+
 tprofilerHeatmap = function(
-  gctFile, minSigSamples = 3, cutoffT = 4, minmax = 5,
+  gctFile = NULL, gct = NULL, minSigSamples = 3, cutoffT = 4, minmax = 5,
   colors = c('blue', 'white', 'red'), modifyColnames = function(x) x,
   cellwidth = 8, cellheight = 8, selectCols = function(x) x,
   clustering_distance_rows="correlation", clustering_distance_cols="correlation", excludeSigSampleGroups = c(),
   parseGroups = NULL, parseGroupsForSigSamples = parseGroups, clusterPerGroup = F, cluster_cols = T, colDist = function(x) as.dist(1 - cor(x)), colClustMeth = "complete", ...
 ) {
   
-  tprof = read.delim(gctFile, as.is=T, skip = 3)
-  rownames(tprof) = tprof[,1]
-  tprof = tprof[,3:ncol(tprof)]
+  if(!is.null(gctFile)) {
+    tprof = loadTprofilerResults(gctFile)
+  } else {
+    tprof = gct
+  }
   
   tprof = tprof[, selectCols(colnames(tprof))]
   if(!is.null(parseGroupsForSigSamples)) {
