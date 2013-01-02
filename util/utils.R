@@ -51,7 +51,7 @@ getLumiAnnot = function(nu.ids, pkg = "lumiMouseAll.db") {
   nu.annot = nuID2IlluminaID(nu.ids, lib.mapping = "lumiMouseIDMapping", idType = "All")
   
   cbind(
-    probeId = nu.annot,
+    probeId = nu.annot[,"Probe_Id"],
     entrez = as.character(mget(nu.ids, lumiMouseAllENTREZID)),
     symbol = as.character(mget(nu.ids, lumiMouseAllSYMBOL)),
     geneName = as.character(mget(nu.ids, lumiMouseAllGENENAME))
