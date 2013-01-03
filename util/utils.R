@@ -57,3 +57,14 @@ getLumiAnnot = function(nu.ids, pkg = "lumiMouseAll.db") {
     geneName = as.character(mget(nu.ids, lumiMouseAllGENENAME))
   )
 }
+
+cor.test.p = function(x, y = NULL, ...) {
+  if(is.null(y)) y = x
+  ps = matrix(1, ncol(x), ncol(y), dimnames=list(colnames(x), colnames(y)))
+  for(i in 1:ncol(x)) {
+    for(j in 1:ncol(y)) {
+      ps[i,j] = cor.test(x[,i], y[,j], ...)$p.value
+    }
+  }
+  ps
+}
