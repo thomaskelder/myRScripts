@@ -51,9 +51,9 @@ createCleanDataTable = function(normData, fit, contrasts, groups, annot = NULL, 
 sigCounts = function(fit, ...) {
   sigTest = decideTests(fit, ...)
   numSig = summary(sigTest)
-  numSig = rbind(numSig, numSig[1,] + numSig[3,])
+  numSig = rbind(numSig, numSig[1,,drop=F] + numSig[3,,drop=F])
   rownames(numSig) = c("Down", "Not significant", "Up", "Significant")
-  numSig = numSig[c("Up", "Down", "Significant", "Not significant"),]
+  numSig = numSig[c("Up", "Down", "Significant", "Not significant"),,drop=F]
   numSig
 }
 
