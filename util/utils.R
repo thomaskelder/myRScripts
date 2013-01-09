@@ -36,9 +36,11 @@ mapEntrezToSpecies = function(ids, inProt, outProt, homology) {
   message("mapping to proteins")
   ip = unlist(mget(ids, inProt, ifnotfound=NA))
   ip = ip[!is.na(ip)]
+  if(length(ip) == 0) return(c())
   message("mapping to homolog proteins")
   op = unlist(mget(ip, homology, ifnotfound=NA))
   op = op[!is.na(op)]
+  if(length(op) == 0) return(c())
   message("mapping to homolog genes")
   oe = unlist(mget(op, outProt, ifnotfound=NA))
   oe = oe[!is.na(oe)]
