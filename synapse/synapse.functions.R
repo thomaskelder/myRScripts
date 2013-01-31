@@ -19,5 +19,5 @@ filesFromEntity = function(entity) {
 
 loadSynapseData = function(id) {
   ent = downloadEntity(id)
-  load(filesFromEntity(ent), .GlobalEnv)
+  load(filesFromEntity(ent), envir = .GlobalEnv)
 }
