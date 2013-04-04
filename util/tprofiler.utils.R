@@ -5,8 +5,8 @@ require(pheatmap)
 require(devtools)
 source_url("https://raw.github.com/thomaskelder/myRScripts/master/util/heatmap.R")
 
-loadTprofilerResults = function(file) {
-  tprof = read.delim(file, as.is=T, skip = 3)
+loadTprofilerResults = function(file, skip = 3) {
+  tprof = read.delim(file, as.is=T, skip = skip)
   rownames(tprof) = tprof[,1]
   tprof = tprof[,3:ncol(tprof)]
   tprof
