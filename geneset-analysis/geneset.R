@@ -211,7 +211,7 @@ getGOSets = function(goAnn, minSize = c(BP = 15, MF = 15, CC = 15), maxSize = c(
 }
 
 pruneByOverlap = function(sets, gsea, colPattern = "signed adj.pvalue", maxOvl = 0.8, pCutoff = 1) {
-	apply(gsea[, grep(colPattern, colnames(gsea))], 2, function(pvals) {
+	apply(gsea[, grep(colPattern, colnames(gsea)), drop=F], 2, function(pvals) {
 	  psort = sort(abs(pvals))
 	  psort = psort[psort < pCutoff]
 	  ssort = sets[names(psort)]
