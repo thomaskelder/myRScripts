@@ -113,7 +113,7 @@ mergeGraphs = function(graphs, setSourceAttr = T, firstAsBase = F) {
           get.vertex.attribute(g, an, V(g)[ovl])
           )
         ovl.attr = apply(ovl.attr, 1, function(x) {
-          xs = gsub("([\\.\\(\\)]{1})", "\\\\\\1", x[2])
+          xs = gsub("([\\.\\(\\)\\+]{1})", "\\\\\\1", x[2])
           if(is.na(x[1])) x[2]
           else if(
             x[1] != x[2] && 
