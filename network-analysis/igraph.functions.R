@@ -114,14 +114,16 @@ mergeGraphs = function(graphs, setSourceAttr = T, firstAsBase = F) {
           )
         ovl.attr = apply(ovl.attr, 1, function(x) {
           xs = gsub("([\\.\\(\\)\\+]{1})", "\\\\\\1", x[2])
-          if(is.na(x[1])) x[2]
+          
+          if(length(x[[1]]) == 0 || is.na(x[[1]])) x[[2]]
+          else if(length(x[[2]]) == 0 || is.na(x[[2]])) x[[1]]
           else if(
-            x[1] != x[2] && 
-              length(grep(paste(xs, ", ", sep=""), x[1])) == 0 &&
-              length(grep(paste(xs, "$", sep=""), x[1])) == 0) {
+            x[[1]] != x[[2]] && 
+              length(grep(paste(xs, ", ", sep=""), x[[1]])) == 0 &&
+              length(grep(paste(xs, "$", sep=""), x[[1]])) == 0) {
             paste(x, collapse = ", ")
           } else {
-            x[1]
+            x[[1]]
           }
         })
         interactions = set.vertex.attribute(interactions, an, V(interactions)[ovl], ovl.attr)
