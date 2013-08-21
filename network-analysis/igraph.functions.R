@@ -20,20 +20,21 @@ saveGML = function(g, fileName, title = "untitled") {
       x = xc
     } else {
       #Escape invalid characters
-	   x = gsub('"', "'", x)
+      x = gsub('"', "'", x)
       x = paste("\"", x , "\"", sep="")
     }
     x
   }
   
+  illAttrChar = "[ -]"
   vAttrNames = list.vertex.attributes(g)
   vAttrNames = vAttrNames[vAttrNames != "id"]
   vAttr = lapply(vAttrNames, function(x) attrToString(get.vertex.attribute(g, x)))
-  names(vAttr) = vAttrNames
+  names(vAttr) = gsub(illAttrChar, "", vAttrNames)
   eAttrNames = list.edge.attributes(g)
   eAttrNames = eAttrNames[eAttrNames != "id"]
   eAttr = lapply(eAttrNames, function(x) attrToString(get.edge.attribute(g, x)))
-  names(eAttr) = eAttrNames
+  names(eAttr) = gsub(illAttrChar, "", eAttrNames)
   
   f = file(fileName, "w")
   cat("graph\n[", file=f)
