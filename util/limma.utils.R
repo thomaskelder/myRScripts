@@ -3,7 +3,7 @@
 ##########################################
 createStatsTable = function(fit, contrasts, annot = NULL, file = NULL, adjust.method = "BH") {
   deg = NULL
-  for(g in contrasts) {
+  for(g in colnames(contrasts)) {
     d = fit[,g]
     d = cbind(
       d$coefficients,
@@ -23,6 +23,7 @@ createStatsTable = function(fit, contrasts, annot = NULL, file = NULL, adjust.me
   if(!is.null(file)) write.table(deg, file, sep="\t", quote = F, row.names = F)
   deg
 }
+
 
 createCleanDataTable = function(normData, fit, contrasts, groups, annot = NULL, file = NULL, adjust.method = "BH") {
   ## Normalized intensities
