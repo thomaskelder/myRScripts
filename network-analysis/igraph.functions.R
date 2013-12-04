@@ -342,3 +342,11 @@ detectAndAnnotateCommunities = function(g, clustAttr = "cluster", organism = "mo
   
   g
 }
+
+nodeAttributesToDataFrame = function(g) {
+  df = data.frame(name = V(g)$name)
+  for(a in setdiff(list.vertex.attributes(g), "name")) {
+    df[,a] = get.vertex.attribute(g, a)
+  }
+  df
+}
