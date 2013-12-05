@@ -350,3 +350,13 @@ nodeAttributesToDataFrame = function(g) {
   }
   df
 }
+
+addNodeCentralities = function(g, attrPostfix = "") {
+  message("betweenness")
+  g = set.vertex.attribute(g, paste0("betweenness", attrPostfix), value = betweenness(g, normalize=T))
+  message("degree")
+  g = set.vertex.attribute(g, paste0("degree", attrPostfix), value = igraph::degree(g))
+  message("coreness")
+  g = set.vertex.attribute(g, paste0("coreness", attrPostfix), value =as.numeric(graph.coreness(g)))
+  g
+}
