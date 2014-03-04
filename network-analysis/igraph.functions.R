@@ -360,3 +360,26 @@ addNodeCentralities = function(g, attrPostfix = "") {
   g = set.vertex.attribute(g, paste0("coreness", attrPostfix), value =as.numeric(graph.coreness(g)))
   g
 }
+
+##########################################################################
+## Extract a subgraph by taking all first neighbors of the given set    ##
+## of seed nodes, keeping only neighbor nodes that have a link          ##
+## to at least two seed nodes.                                          ##
+##########################################################################
+nbSubgraph = function(g, seed) {
+  if(sum(!(seed %in% V(g)$name)) > 0) {
+    sn = seed[!(seed %in% V(g)$name)]
+    warning(paste0("Watch out, following seed nodes not in graph: ", paste(sn, collapse=", ")))
+    seed = seed[seed %in% V(g)$name]
+  }
+  ## Get all neighbors of the seed nodes
+  seedNbs = V(g)[nei(seed)]$name
+  seedNbs = setdiff(seedNbs, seed)
+  
+  ## Get subgraph of seed + neighbors
+  gs = induced.subgraph(g, c(seed, seedNbs))
+  gs = delete.edges(gs, E(gs)[seedNbs %--% seedNbs])  
+  gsDegree = igraph::degree(gs)
+  
+  gs.pruned = induced.subgraph(gs, V(gs)[gsDegree > 1 | name %in% seed])
+}
