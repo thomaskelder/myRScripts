@@ -383,3 +383,15 @@ nbSubgraph = function(g, seed) {
   
   gs.pruned = induced.subgraph(gs, V(gs)[gsDegree > 1 | name %in% seed])
 }
+
+saveNetAsCyTxt = function(g, filePrefix, ...) {
+  ## Save edges and attributes
+  attr = get.data.frame(g, "edges")
+  attr[is.na(attr)] = ""
+  write.table(attr, paste0(filePrefix, ".edges.txt"), sep="\t", quote=F, row.names=F)
+  
+  ## Save node attributes
+  attr = nodeAttributesToDataFrame(g)
+  attr[is.na(attr)] = ""
+  write.table(attr, paste0(filePrefix, ".attr.txt"), sep="\t", quote=F, row.names=F)
+}
