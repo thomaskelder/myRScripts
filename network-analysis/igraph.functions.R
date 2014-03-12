@@ -395,3 +395,14 @@ saveNetAsCyTxt = function(g, filePrefix, ...) {
   attr[is.na(attr)] = ""
   write.table(attr, paste0(filePrefix, ".attr.txt"), sep="\t", quote=F, row.names=F)
 }
+
+addNodeCentrality = function(g) {
+  ## Add node centrality
+  message("betweenness")
+  g = set.vertex.attribute(g, "betweenness", value = betweenness(g, normalize=T))
+  message("degree")
+  g = set.vertex.attribute(g, "degree", value = igraph::degree(g))
+  message("coreness")
+  g = set.vertex.attribute(g, "coreness", value =as.numeric(graph.coreness(g)))
+  g
+}
