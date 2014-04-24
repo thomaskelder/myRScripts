@@ -12,8 +12,12 @@ groupedHeatmap = function(
     
     matlist = lapply(unique(groups), function(g) {
       cols = colnames(hdata)[groups == g]
-      colorder = hclust(colDist(hdata[,cols]), method=colClustMeth)
-      cbind(hdata[, cols[colorder$order]], matrix(0, nrow = nrow(hdata), ncol = 1))
+      if(cluster_cols & length(cols) > 1) {
+        colorder = hclust(colDist(hdata[,cols]), method=colClustMeth)
+      } else {
+        colorder = list(order = 1:length(cols))
+      }
+      cbind(hdata[, cols[colorder$order], drop=F], matrix(0, nrow = nrow(hdata), ncol = 1))
     })
     mat = matlist[[1]]
     for(m in 2:length(matlist)) mat = cbind(mat, matlist[[m]])
