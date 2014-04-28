@@ -32,7 +32,7 @@ groupedHeatmap = function(
   nc = 256
   colors = colorRampPalette(colors)(nc+2)
   breaks = seq(-minmax, minmax, (2*minmax)/(nc-1))
-  breaks = c(min(hdata, na.rm=T)-1, breaks, max(hdata, na.rm=T)+1)
+  breaks = c(min(c(-minmax, min(hdata, na.rm=T))-1), breaks, max(hdata, na.rm=T)+1)
   pheatmap(
     hdata, color = colors, scale = "none", breaks = breaks,
     cellwidth = cellwidth, cellheight = cellheight, 
