@@ -9,7 +9,6 @@ groupedHeatmap = function(
 ) {
   if(clusterPerGroup & !is.null(parseGroups)) {
     groups = parseGroups(colnames(hdata))
-    
     matlist = lapply(unique(groups), function(g) {
       cols = colnames(hdata)[groups == g]
       if(cluster_cols & length(cols) > 1) {
@@ -19,9 +18,13 @@ groupedHeatmap = function(
       }
       cbind(hdata[, cols[colorder$order], drop=F], matrix(0, nrow = nrow(hdata), ncol = 1))
     })
+    
     mat = matlist[[1]]
-    for(m in 2:length(matlist)) mat = cbind(mat, matlist[[m]])
+    if(length(matlist) > 2) {
+      for(m in 2:length(matlist)) mat = cbind(mat, matlist[[m]])
+    }
     mat = as.matrix(mat)
+    mode(mat) = "numeric"
     colnames(mat)[grep("^matrix\\(", colnames(mat))] = ""
     mat = mat[, 1:(ncol(mat)-1)]
     hdata = mat
